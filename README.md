@@ -355,8 +355,258 @@ Par défaut, la plupart des commandes renverront une sortie JSON. AWS a un certa
 
 ![image](https://user-images.githubusercontent.com/107214400/176632938-dd242f75-6731-45e3-b469-642964634c83.png)
 
+## Génération de vos clés SSH
+Par défaut, Amazon EC2 utilise des paires de clés SSH pour vous donner un accès SSH à vos instances EC2. Vous pouvez soit générer une paire de clés dans EC2 et télécharger la clé privée, soit générer une clé vous-même à l'aide d'un outil tiers tel que OpenSSL, en important la clé publique dans EC2. Nous utiliserons la première méthode pour créer des clés EC2 SSH.
+
+Ici, assurez-vous de définir des autorisations en lecture seule sur votre fichier de clé privée (`.pem`) nouvellement généré :
+
+```
+$ aws ec2 create-key-pair --key-name EffectiveDevOpsAWS --query
+    'KeyMaterial' --output text > ~/.ssh/EffectiveDevOpsAWS.pem
     
-    
+$ aws ec2 describe-key-pairs --key-name EffectiveDevOpsAWS
+{
+    "KeyPairs": [
+        {
+            "KeyName": "EffectiveDevOpsAWS",
+            "KeyFingerprint":
+        "27:83:5d:9b:4c:88:f6:15:c7:39:df:23:4f:29:21:3b:3d:49:e6:af"
+        }
+    ]
+}
+
+$ cat ~/.ssh/EffectiveDevOpsAWS.pem
+-----BEGIN RSA PRIVATE KEY-----
+MIIEpAIBAAKCAQEAiZLtUMnO2OKnHvTJOiIP26fThdsU0YRdlKI60in85x9aFZXSrZsKwOhWPpMtnUMJKeGvVQut+gJ1I1PNNjPqS2Dy60jH55hntUhr/gYEAoOFjJ3KjREYpT1jnROEM2cKiVrdefJmNTel+RyF2IGmgg+1Hrjqf/OQSH8QwVmWK9SosfIwVX4X8gDqcZzDS1JXGEjIB7IipGYjiysP1D74myTF93u/-----END RSA PRIVATE KEY-----
+
+$ chmod 400 ~/.ssh/EffectiveDevOpsAWS.pem
+
+$ aws ec2 run-instances --instance-type t2.micro --key-name aws-devops -- security-group-id sg-01864b4c --image-id ami-cfe4b2b0
+    {
+        "Instances": [
+        {
+            "Monitoring": {
+            "State": "disabled"
+            },
+            "PublicDnsName": "",
+            "StateReason": {
+            "Message": "pending",
+            "Code": "pending"
+            },
+            "State": {
+            "Code": 0,
+            "Name": "pending"
+            },
+            "EbsOptimized": false,
+            "LaunchTime": "2018-08-08T06:38:43.000Z",
+            "PrivateIpAddress": "172.31.22.52",
+            "ProductCodes": [],
+            "VpcId": "vpc-4cddce2a",
+            "CpuOptions": {
+            "CoreCount": 1,
+            "ThreadsPerCore": 1
+            },
+            "StateTransitionReason": "",
+            "InstanceId": "i-057e8deb1a4c3f35d",
+            "ImageId": "ami-cfe4b2b0",
+            "PrivateDnsName": "ip-172-31-22-52.ec2.internal",
+            "KeyName":"aws-devops",
+            "SecurityGroups": [
+            {
+            "GroupName": "HelloWorld",
+            "GroupId": "sg-01864b4c"
+            }
+            ],
+            "ClientToken": "", "SubnetId": "subnet-6fdd7927", "InstanceType": "t2.micro", "NetworkInterfaces": 
+            [
+            "Status": "in-use", "MacAddress": "0a:d0:b9:db:7b:38", "SourceDestCheck": true, "VpcId": "vpc-4cddce2a", "Description": "", "NetworkInterfaceId": "eni-001aaa6b5c7f92b9f", "PrivateIpAddresses": [
+            "PrivateDnsName": "ip-172-31-22-52.ec2.internal", "Primary": true, "PrivateIpAddress": "172.31.22.52"
+            }
+            ],
+            "PrivateDnsName": "ip-172-31-22-52.ec2.internal",
+            "Attachment": {
+            "Status": "attaching",
+            "DeviceIndex": 0,
+            "DeleteOnTermination": true,
+            "AttachmentId": "eni-attach-0428b549373b9f864",
+            "AttachTime": "2018-08-08T06:38:43.000Z"
+            },
+            "Groups": [
+            {
+            "GroupName": "HelloWorld", 
+            "GroupId": "sg-01864b4c"
+            }
+            ],
+            "Ipv6Addresses": [], "OwnerId": "094507990803", "SubnetId": "subnet-6fdd7927", "PrivateIpAddress":  "172.31.22.52"
+            }
+            ],
+            "SourceDestCheck": true, "Placement": {
+            "Tenancy": "default", "GroupName": "", "AvailabilityZone": "us-east-1c"
+            },
+            "Hypervisor": "xen", "BlockDeviceMappings": [], "Architecture": "x86_64", "RootDeviceType": "ebs", "RootDeviceName": "/dev/xvda", "VirtualizationType": "hvm", "AmiLaunchIndex": 0
+            }
+            ], "ReservationId": "r-09a637b7a3be11d8b", "Groups": [], "OwnerId": "094507990803"
+            }
+ 
+$ aws ec2 describe-instance-status --instance-ids i-057e8deb1a4c3f35d
+            "InstanceStatuses": [
+            "InstanceId": "i-057e8deb1a4c3f35d", 
+            "InstanceState": {
+            "Code": 16, "Name": "running" },
+            "AvailabilityZone": "us-east-1c", "SystemStatus": {
+            "Status": "initializing", "Details": [
+            "Status": "initializing", "Name": "reachability" }
+            ]
+            },
+            "InstanceStatus": {
+            "Status": "initializing", "Details": [
+            {
+            "Status": "initializing","Name": "reachability" 
+            }
+            ]
+            }
+          }
+       ]
+  }          
+
+$ aws ec2 describe-instance-status --instance-ids i-057e8deb1a4c3f35d --output text| grep -i SystemStatus
+SYSTEMSTATUS ok   
+
+$ aws ec2 describe-instances --instance-ids i-057e8deb1a4c3f35d --query "Reservations[*].Instances[*].PublicDnsName"
+[
+    [
+          "ec2-34-201-101-26.compute-1.amazonaws.com"
+    ]
+]
+
+$ ssh -i ~/.ssh/EffectiveDevOpsAWS.pem ec2-user@ ec2-34-201-101-26.compute-1.amazonaws.com
+The authenticity of host 'ec2-34-201-101-26.compute-1.amazonaws.com (172.31.22.52)' can't be established.
+ECDSA key fingerprint is SHA256:V4kdXmwb5ckyU3hw/E7wkWqbnzX5DQR5zwP1xJXezPU.
+ECDSA key fingerprint is MD5:25:49:46:75:85:f1:9d:f5:c0:44:f2:31:cd:e7:55:9f.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added 'ec2-34-201-101-26.compute-1.amazonaws.com,172.31.22.52' (ECDSA) to the list of known hosts.<br/><br/> __| __|_ )<br/> _| ( / Amazon Linux AMI
+___|\___|___|
+https://aws.amazon.com/amazon-linuxami/2018.03-release-notes/
+1 package(s) needed for security, out of 2 available
+Run "sudo yum update" to apply all updates.
+[ec2-user@ip-172-31-22-52 ~]$
+```
+Si vous rencontrez des problèmes, ajoutez l'option `-vvv` dans votre commande SSH pour le résoudre.
           
-          
+## Créer une application Web Hello World simple
+
+Maintenant que nous sommes connectés à notre instance EC2, nous sommes prêts à commencer à jouer avec. Ici, nous nous concentrerons sur le cas d'utilisation le plus courant d'AWS dans les entreprises technologiques : l'hébergement d'une application. En termes de langages, nous utiliserons JavaScript, qui est l'un des langages les plus populaires sur GitHub. Cela dit, cette application vise davantage à fournir une assistance afin de démontrer comment utiliser au mieux AWS en utilisant les principes DevOps. Il n'est pas nécessaire d'avoir des connaissances sur JavaScript pour comprendre cet exercice.
+Certains des principaux avantages offerts par JavaScript par rapport à cet exercice incluent le fait que :
+* Il est assez facile à écrire et à lire, même pour les débutants
+* Il n'a pas besoin d'être compilé
+* Il peut être exécuté côté serveur grâce à Node.js (https://nodejs.org)
+* Il est officiellement pris en charge par AWS et, par conséquent, le SDK AWS pour JavaScript est un citoyen de première classe
+
+Pour le reste du chapitre, toutes les commandes et le code doivent être exécutés sur notre instance via SSH.
+
+```
+[ec2-user@ip-172-31-22-52 ~]$ sudo yum install --enablerepo=epel -y nodejs 
+[ec2-user@ip-172-31-22-52 ~]$ node -v
+v0.10.48
+```
+Il s'agit certainement d'une ancienne version du nœud, mais elle suffira pour ce dont nous avons besoin.
+
+## Exécuter une application Node.js Hello World
+
+Maintenant que le nœud est installé, nous pouvons créer une simple application Hello World.
+Voici le code pour créer ceci :
+
+```
+var http = require("http") http.createServer(function (request, response) {
+// Send the HTTP header
+// HTTP Status: 200 : OK
+// Content Type: text/plain
+response.writeHead(200, {'Content-Type': 'text/plain'})
+// Send the response body as "Hello World" response.end('Hello World\n')
+}).listen(3000)
+// Console will print the message console.log('Server running')
+```
+N'hésitez pas à le copier dans un fichier. Alternativement, si vous voulez gagner du temps, téléchargez ceci depuis GitHub 
+Après avoir fait un `wget du répertoire github dans ce dépôt le résultat sera : 
+```
+Saving to: ‘/home/ec2-user/helloworld.js’
+/home/ec2-user/helloworld.js 100%[=====================================================================================>] 2018-08-19 13:06:42 (37.9 MB/s) - ‘/home/ec2-user/helloworld.js’ saved [384/384]
+[ec2-user@ip-172-31-22-52 ~]$
+```
+
+Afin de lancer l'application Hello World, nous allons maintenant simplement lancer le code suivant :
+
+```
+[ec2-user@ip-172-31-22-52 ~]$ node helloworld.js
+Server running
+```
+Si tout se passe bien, vous pourrez désormais l'ouvrir dans votre navigateur au lien suivant : `http://votre-nom-dns-public:3000` . Ou dans mon cas, cela se trouvera ici : `http://ec2-34-201-101-26.compute-1.amazonaws.com:3000`. Vous pourrez alors voir le résultat, comme suit :
+
+![image](https://user-images.githubusercontent.com/107214400/176642589-2b0ba673-2e90-4bdd-a7e1-2129b1a9ca61.png)
+
+Nous allons maintenant arrêter l'exécution de l'application web Hello World avec `Ctrl + C` dans votre fenêtre Terminal.
+
+## Transformer notre code simple en service en utilisant upstart
+Puisque nous avons démarré l'application de nœud manuellement dans le terminal, fermer la connexion SSH ou appuyer sur __Ctrl + C__ sur le clavier arrêtera le processus de nœud, et donc notre application Hello World ne fonctionnera plus. Amazon Linux, contrairement à une distribution standard basée sur Red Hat, est livré avec un système appelé **upstart**.
+
+Ceci est assez facile à utiliser et fournit quelques fonctionnalités supplémentaires que les scripts de **démarrage System-V traditionnels** n'ont pas, telles que la possibilité de réapparaître un processus qui est mort de manière inattendue. Pour ajouter une configuration de démarrage, vous devez créer un fichier dans `/etc/init` sur l'instance EC2.
+
+Voici le code pour l'insérer dans `/etc/init/helloworld.conf` : description "Hello world Daemon"
+
+```
+# Commencez lorsque le système est prêt à fonctionner en réseau. Démarrer sur les interfaces elasticnetwork démarrées
+# Arrêtez-vous lorsque le système est en train de s'arrêter. Arrêt à l'extinction
+respawn script exec su --session-command="/usr/bin/node /home/ec2-user/helloworld.js" ec2-user
+end script
+```
+
+> Pourquoi commencer sur les interfaces réseau élastiques ? Si vous connaissez upstart en dehors d'AWS, vous avez peut-être utilisé start on run level [345]. Dans AWS, le problème avec cela est que votre réseau provient d'Elastic Network Interface (ENI), et si votre application démarre avant ce service, il se peut qu'elle ne puisse pas se connecter correctement au réseau.
+
+Faites un Wget pour insérer le `helloworld.conf`
+
+```
+Saving to: ‘/etc/init/helloworld.conf’
+/etc/init/helloworld.conf 100%[=====================================================================================>] 2018-08-19 13:09:39 (54.0 MB/s) - ‘/etc/init/helloworld.conf’ saved [301/301]
+[ec2-user@ip-172-31-22-52 ~]$
+```
+Nous pouvons maintenant simplement démarrer notre application, comme suit :
+
+```
+[ec2-user@ip-172-31-22-52 ~]$ sudo start helloworld
+helloworld start/running, process 2872
+[ec2-user@ip-172-31-22-52 ~]$
+```
+Comme prévu, `http://your-public-dns-name:3000` fonctionne toujours, et cette fois nous pouvons fermer notre connexion SSH en toute sécurité.
+
+```
+[ec2-user@ip-172-31-22-52 ~]$ sudo stop helloworld helloworld stop/waiting
+[ec2-user@ip-172-31-22-52 ~]$ ec2-metadata --instance-id instance-id: i-057e8deb1a4c3f35d 
+[ec2-user@ip-172-31-22-52 ~]$ exit logout
+$ aws ec2 terminate-instances --instance-ids i-057e8deb1a4c3f35d {
+    "TerminatingInstances": [
+    {
+        "InstanceId": "i-057e8deb1a4c3f35d", "CurrentState": {
+        "Code": 32, "Name": "shutting-down"
+        }, "PreviousState": {
+        "Code": 16, "Name": "running"
+            }
+         }
+    ]
+}
+
+```
+## Résumé
+Ce chapitre était une introduction rapide et simple à AWS et à son service le plus notoire, EC2. Après avoir souscrit à AWS, nous avons configuré notre environnement de manière à pouvoir créer un serveur virtuel à l'aide de l'interface de ligne de commande. Pour cela, nous avons sélectionné notre première AMI, créé notre premier groupe de sécurité et généré nos clés SSH, que nous réutiliserons tout au long du livre. Après avoir lancé une instance EC2, nous avons déployé manuellement une simple application Node.js pour afficher Hello World.
+
+Si le processus n'était pas très fastidieux grâce à l'AWS CLI, il nécessitait tout de même de passer par de nombreuses étapes, peu répétables. Nous avons également déployé l'application sans aucune automatisation ni validation. De plus, la seule façon de vérifier si l'application est en cours d'exécution est de vérifier manuellement le point de terminaison. Dans le reste nous reviendrons sur le processus de création et de gestion des applications et de l'infrastructure Web, mais, cette fois, nous suivrons les principes DevOps et intégrerons leurs meilleures pratiques.
+
+Dans la partie, __Traiter votre infrastructure comme du code__ , nous aborderons l'un des premiers problèmes que nous avons rencontrés : la gestion de notre infrastructure avec l'automatisation. Pour ce faire, nous allons écrire du code pour gérer notre infrastructure.
+
+
+
+
+
+
+
+
           
