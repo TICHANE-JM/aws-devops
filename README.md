@@ -158,4 +158,205 @@ De nos jours, Linux et macOS X sont parmi les systèmes d'exploitation les plus 
 
 Cela installera la fonctionnalité et vous demandera de redémarrer votre ordinateur.
 
-7. Une fois de retour dans Windows, cliquez à nouveau sur le bouton Démarrer, recherchez __bash__ et démarrez le Bash sur Ubuntu sur l'application Windows :
+7. Une fois de retour dans Windows, cliquez à nouveau sur le bouton Démarrer, recherchez __bash__ et démarrez le Bash sur Ubuntu sur l'application Windows 
+8. Après quelques étapes d'initialisation, vous pourrez utiliser Bash sous Windows de la même manière que vous le feriez sous Linux.
+
+À partir de là, allez dans votre Windows Store et installez Ubuntu 22.04 LTS et cliquez sur obtenir.
+
+
+## Installation du package AWS CLI
+
+L'utilitaire AWS CLI est écrit en Python. Bien qu'il existe plusieurs façons de l'installer, nous utiliserons **PyPA**, le gestionnaire de packages Python, pour installer cet outil.
+
+Pour installer PyPA, selon votre système d'exploitation, vous devrez exécuter les commandes suivantes :
+
+![image](https://user-images.githubusercontent.com/107214400/176622136-6c5cba69-359e-40f3-bc1e-4b7846a6e6c3.png)
+
+Une fois installée lancez l'installation en cliquant sur ouvrir
+
+![image](https://user-images.githubusercontent.com/107214400/176622341-a5a4fb50-9f51-4780-965d-e79b9c8947ed.png)
+
+Suivez les étapes de l'installation
+
+![image](https://user-images.githubusercontent.com/107214400/176622505-249e40f9-fc09-4479-a717-9e0252571549.png)
+
+![image](https://user-images.githubusercontent.com/107214400/176622735-8245b634-1ab3-4a42-b81b-f3e2ad5e8e05.png)
+
+![image](https://user-images.githubusercontent.com/107214400/176622860-1bfea026-d02e-420a-b517-93c0fdd42cd7.png)
+
+![image](https://user-images.githubusercontent.com/107214400/176623046-17262301-1603-4ef2-9203-a2ee0a2ae072.png)
+
+![image](https://user-images.githubusercontent.com/107214400/176623349-bcbb7dad-076c-4386-8d39-5936a178fdc2.png)
+
+Cliquez sur finir et une fenêtre apparaît
+
+![image](https://user-images.githubusercontent.com/107214400/176623547-d30a794a-391b-41b0-a3b2-75b824555591.png)
+
+* Sous Windows :
+```
+$ sudo apt install python3-pip
+```
+* Sous macOS X
+```
+$ sudo east_install pip
+```
+* Sur les distributions Linux basées sur Debian :
+```
+$ sudo apt-get install python-pip python-dev build-essential
+```
+* Sur les distributions Linux basées sur Red Hat/CentOS :
+```
+$ sudo yum -y install python-pip
+```
+Une fois PyPA installé, vous aurez accès à la commande `pip`.
+
+Enfin, pour installer l'AWS CLI  il vous suffit d'exécuter la commande suivante :
+```
+$ sudo apt install awscli
+```
+
+## Configuration de l'AWS CLI
+
+Pour ce faire, vous devrez extraire l'ID de clé d'accès AWS et la clé d'accès secrète du fichier téléchargé à l'étape 4 de la section Création d'un nouvel utilisateur dans IAM :
+
+```
+$ more credentials.csv
+User Name,Access Key Id,Secret Access Key "totocompteaws", AKIAII55DTLEV3X4ETAQ, mL2dEC8/
+```
+Nous allons exécuter la commande suivante pour configurer notre compte AWS :
+
+```
+$ aws configure
+AWS Access Key ID [None]: AKIAII55DTLEV3X4ETAQ
+AWS Secret Access Key [None]: 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
+Default region name [None]: us-east-1
+Default output format [None]:
+```
+
+À ce stade, nous sommes prêts à commencer à utiliser la CLI. On peut rapidement vérifier que tout fonctionne en listant les comptes utilisateurs, comme suit :
+
+```
+$ aws iam list-users
+{
+    "Users": [
+        {
+              "UserName": "totocompte aws",
+              "PasswordLastUsed": "2018-08-07T09:57:53Z",
+              "CreateDate": "2018-08-07T04:56:03Z",
+              "UserId": "AIDAIN22VCQLK43UVWLMK",
+              "Path": "/",
+              "Arn": "arn:aws:iam::094507990803:user/totocompteaws"
+        }
+     ]
+}
+```
+> AWS aws-shell
+> Amazon dispose d'un deuxième outil CLI appelé `aws-shell`. Cet outil est plus interactif que la commande `awscli` classique, car il offre une auto-complétion prête à l'emploi et une vue en écran partagé qui vous permet d'accéder à la documentation lorsque vous tapez vos commandes. Si vous êtes un nouvel utilisateur AWS, essayez-le (`pip install aws-shell`).
+
+## Création de notre premier serveur Web
+
+Maintenant que notre environnement est configuré, nous sommes enfin prêts à lancer notre première instance EC2. Il y a plusieurs façons de le faire. Puisque nous venons d'installer et de configurer `awscli` et que nous voulons voir des moyens efficaces de gérer les infrastructures, nous allons montrer comment procéder à l'aide de la CLI.
+
+Le lancement d'un serveur virtuel nécessite d'avoir un certain nombre d'informations en amont. Nous utiliserons la commande `aws ec2 run-instances`, mais nous devons lui fournir les éléments suivants :
+* Un identifiant AMI
+* Un type d'instance
+* A security group
+* Une paire de clés SSH
+
+## Amazon Machine Images (AMI)
+
+Une AMI est un package qui contient, entre autres, le système de fichiers racine avec le système d'exploitation (par exemple, Linux, UNIX ou Windows) ainsi que des logiciels supplémentaires nécessaires au démarrage du système. Pour trouver l'AMI appropriée, nous utiliserons la commande `aws ec2 describe-images`. Par défaut, la commande `describe-images` répertorie toutes les AMI publiques disponibles, soit bien plus de 3 millions à l'heure actuelle. Pour tirer le meilleur parti de cette commande, il est important de la combiner avec l'option de filtre pour n'inclure que l'AMI que nous souhaitons utiliser. Dans notre cas, nous souhaitons utiliser les éléments suivants pour filtrer nos AMI :
+
+* Nous voulons que le nom soit Amazon Linux AMI, qui désigne la distribution Linux officiellement prise en charge par AWS. Amazon Linux est basé sur Red Hat/CentOS mais inclut quelques packages supplémentaires pour faciliter l'intégration avec d'autres services AWS. Vous pouvez en savoir plus sur AWS Linux sur http://amzn.to/2uFT13F.
+* Nous voulons utiliser la version `x84_64` bits de Linux pour correspondre à l'architecture que nous utiliserons.
+* Le type de virtualisation doit être HVM, qui signifie machine virtuelle matérielle. Il s'agit du type de virtualisation le plus récent et le plus performant.
+* Nous voulons un support GP2, qui nous permettra d'utiliser la dernière génération d'instances qui ne sont pas livrées avec le magasin d'instances, ce qui signifie que les serveurs qui alimentent nos instances seront différents des serveurs qui stockent nos données.
+
+De plus, nous allons trier la sortie par date et ne regarder que l'AMI la plus récemment publiée :
+```
+$ aws ec2 describe-images --filters "Name=description,Values=Amazon Linux AMI * x86_64 HVM
+```
+
+Le résultat de l'exécution de la commande précédente peut être affiché comme suit :
+![image](https://user-images.githubusercontent.com/107214400/176629765-82f9303b-8beb-4e2a-a0d3-8a509738cbea.png)
+
+Comme vous pouvez le constater, à l'heure actuelle, l'ID AMI le plus récent est `ami-cfe4b2b0`. Cela peut différer au moment où vous exécutez la même commande, car les fournisseurs Amazon inclus mettent régulièrement à jour leur système d'exploitation.
+
+> Lorsque vous utilisez l'option `aws cli --query`, la sortie peut être très conséquente pour certaines commandes. En reprenant l'exemple précédent, si nous ne nous soucions que d'un sous-ensemble d'informations, nous pouvons compléter les commandes avec l'option `--query` pour filtrer uniquement les informations que nous voulons. Cette option utilise le langage de requête JMESPath.
+
+## Types d'instances
+Dans cette section, nous sélectionnerons le matériel virtuel à utiliser pour notre serveur virtuel. AWS fournit un certain nombre d'options mieux décrites dans leur documentation à l'adresse https://aws.amazon.com/ec2/instance-types/. Nous aborderons les types d'instances plus en détail dans la partie, __Faire évoluer votre infrastructure__.
+
+1. Pour l'instant, nous allons sélectionner le type d'instance `t2.micro` car il est éligible au niveau d'utilisation gratuite d'AWS.
+
+```
+$ aws ec2 describe-vpcs 
+{
+    "Vpcs": [
+    {
+          "VpcId": "vpc-4cddce2a", "InstanceTenancy": "default", "CidrBlockAssociationSet": [
+          {
+              "AssociationId": "vpc-cidr-assoc-3c313154", "CidrBlock": "172.31.0.0/16", "CidrBlockState": 
+                  {
+                      "State": "associated"
+                  }
+          }
+          ],
+          "State": "available", "DhcpOptionsId": "dopt-c0be5fa6", "CidrBlock": "172.31.0.0/16", "IsDefault": true
+    }
+    ]
+ }     
+ ```
+ 2. Maintenant que nous connaissons l'ID du VPC (le vôtre sera différent), nous pouvons créer notre nouveau groupe de sécurité, comme suit :
+
+```
+$ aws ec2 create-security-group \
+        --group-name HelloWorld \
+        --description "Hello World Demo" \
+        --vpc-id vpc-4cddce2a
+    {
+        "GroupId": "sg-01864b4c"
+    }  
+```
+3. Par défaut, les groupes de sécurité autorisent tout le trafic sortant de l'instance. Nous avons juste besoin d'ouvrir SSH (tcp/22) et tcp/3000 pour le trafic entrant. Nous devons ensuite saisir les éléments suivants :
+
+```
+$ aws ec2 authorize-security-group-ingress \
+         --group-name HelloWorld \
+         --protocol tcp \
+         --port 22 \
+         --cidr 0.0.0.0/0
+      $ aws ec2 authorize-security-group-ingress \
+         --group-name HelloWorld \
+         --protocol tcp \
+         --port 3000 \
+         --cidr 0.0.0.0/0
+ ```
+ 
+ 4. Nous pouvons maintenant vérifier la modification apportée à l'aide du code suivant, car les commandes précédentes ne sont pas détaillées :
+
+```
+$ aws ec2 describe-security-groups \
+        --group-names HelloWorld \
+        --output text
+    SECURITYGROUPS Hello World Demo sg-01864b4c HelloWorld
+    094507990803 vpc-4cddce2a
+    IPPERMISSIONS 22 tcp 22
+    IPRANGES 0.0.0.0/0
+    IPPERMISSIONS 3000 tcp 3000
+    IPRANGES 0.0.0.0/0
+    IPPERMISSIONSEGRESS -1
+    IPRANGES 0.0.0.0/0
+ ```
+ Comme prévu, nous avons ouvert le trafic vers les ports appropriés. Si vous savez comment trouver votre adresse IP publique, vous pouvez améliorer la règle SSH en remplaçant 0.0.0.0/0 par votre adresse IP/32 afin que vous seul puissiez essayer de vous connecter en SSH à cette instance EC2.
+ 
+**Utilisation de l'option aws cli --output**
+Par défaut, la plupart des commandes renverront une sortie JSON. AWS a un certain nombre d'options disponibles dans le monde. Vous pouvez les voir un peu utilisés dans ce chapitre. La première option est --output [json | texte | table]:
+
+![image](https://user-images.githubusercontent.com/107214400/176632938-dd242f75-6731-45e3-b469-642964634c83.png)
+
+    
+    
+          
+          
+          
