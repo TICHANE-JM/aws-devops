@@ -1,11 +1,11 @@
-# Provider Configuration for AWS
+# Configuration du fournisseur pour AWS
 provider "aws" {
   access_key = "<YOUR AWS ACCESS KEY>"
   secret_key = "<YOUR AWS SECRET KEY>"
   region     = "us-east-1"
 }
 
-# Resource Configuration for AWS
+# Configuration des ressources pour AWS
 resource "aws_instance" "myserver" {
   ami = "ami-cfe4b2b0"
   instance_type = "t2.micro"
