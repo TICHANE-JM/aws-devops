@@ -1,0 +1,29 @@
+---
+language: python
+python: "2.7"
+
+# Utiliser la nouvelle infrastructure de conteneurs
+sudo: false
+
+# Installer ansible
+addons:
+  apt:
+    packages:
+    - python-pip
+
+install:
+  # Installer ansible
+  - pip install ansible
+
+  # Vérifier la version ansible
+  - ansible --version
+
+  # Créez ansible.cfg avec le chemin de rôles correct
+  - printf '[defaults]\nroles_path=../' >ansible.cfg
+
+script:
+  # Vérification de la syntaxe du rôle de base
+  - ansible-playbook tests/test.yml -i tests/inventory --syntax-check
+
+notifications:
+  webhooks: https://galaxy.ansible.com/api/v1/notifications/
