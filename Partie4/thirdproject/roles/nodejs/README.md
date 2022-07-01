@@ -6,22 +6,22 @@ Une brève description du rôle va ici.
 Conditions
 ------------
 
-Any pre-requisites that may not be covered by Ansible itself or the role should be mentioned here. For instance, if the role uses the EC2 module, it may be a good idea to mention in this section that the boto package is required.
+Tous les prérequis qui peuvent ne pas être couverts par Ansible lui-même ou le rôle doivent être mentionnés ici. Par exemple, si le rôle utilise le module EC2, il peut être judicieux de mentionner dans cette section que le package boto est requis.
 
-Role Variables
+Variables de rôle
 --------------
 
-A description of the settable variables for this role should go here, including any variables that are in defaults/main.yml, vars/main.yml, and any variables that can/should be set via parameters to the role. Any variables that are read from other roles and/or the global scope (ie. hostvars, group vars, etc.) should be mentioned here as well.
+La description des variables définissables pour ce rôle doit aller ici, y compris toutes les variables qui se trouvent dans defaults/main.yml, vars/main.yml et toutes les variables qui peuvent/devraient être définies via des paramètres pour le rôle. Toutes les variables lues à partir d'autres rôles et/ou de la portée globale (c'est-à-dire les variables d'hôte, les variables de groupe, etc.) doivent également être mentionnées ici.
 
-Dependencies
+Dépendances
 ------------
 
-A list of other roles hosted on Galaxy should go here, plus any details in regards to parameters that may need to be set for other roles, or variables that are used from other roles.
+Une liste des autres rôles hébergés sur Galaxy devrait aller ici, ainsi que tous les détails concernant les paramètres qui peuvent devoir être définis pour d'autres rôles, ou les variables qui sont utilisées à partir d'autres rôles.
 
-Example Playbook
+Exemple de livre de jeu
 ----------------
 
-Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
+Inclure un exemple d'utilisation de votre rôle (par exemple, avec des variables transmises en tant que paramètres) est toujours agréable pour les utilisateurs :
 
     - hosts: servers
       roles:
@@ -32,7 +32,7 @@ License
 
 BSD
 
-Author Information
+Informations sur l'auteur
 ------------------
 
-An optional section for the role authors to include contact information, or a website (HTML is not allowed).
+Une section facultative pour les auteurs du rôle afin d'inclure des informations de contact ou un site Web (HTML n'est pas autorisé).
