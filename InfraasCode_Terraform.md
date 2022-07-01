@@ -21,10 +21,10 @@ Les sites Web suivants fournissent de plus amples informations sur Terraform :
 * Terraform official website for product information: https://terraform.io
 * Terraform pris en charge fournit des détails : https://www.terraform.io/docs/providers/
 * Détails du langage de configuration HashiCorp : https://github.com/hashicorp/hcl
-* Lien GitHub pour le modèle Terraform pour le premier projet : https://raw.githubusercontent.com/yogeshraheja/EffectiveDevOpsTerraform/master/firstproject/ec2.tf
-* Lien GitHub pour le modèle Terraform pour le deuxième projet : https://raw.githubusercontent.com/yogeshraheja/EffectiveDevOpsTerraform/master/secondproject/helloworldec2.tf
-* Lien Github pour le modèle Terraform pour le troisième projet : https://raw.githubusercontent.com/yogeshraheja/EffectiveDevOpsTerraform/master/thirdproject/helloworldansible.tf
-* Lien Github pour le modèle Terraform pour le quatrième projet : https://raw.githubusercontent.com/yogeshraheja/EffectiveDevOpsTerraform/master/fourthproject/helloworldansiblepull.tf
+* Lien GitHub pour le modèle Terraform pour le premier projet : https://raw.githubusercontent.com/TICHANE-JM/aws-devops/master/firstproject/ec2.tf
+* Lien GitHub pour le modèle Terraform pour le deuxième projet : https://raw.githubusercontent.com/TICHANE-JM/aws-devops/master/secondproject/helloworldec2.tf
+* Lien Github pour le modèle Terraform pour le troisième projet : https://raw.githubusercontent.com/TICHANE-JM/aws-devops/master/thirdproject/helloworldansible.tf
+* Lien Github pour le modèle Terraform pour le quatrième projet : https://raw.githubusercontent.com/TICHANE-JM/aws-devops/master/fourthproject/helloworldansiblepull.tf
 
 
 
