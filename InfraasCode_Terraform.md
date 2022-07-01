@@ -712,7 +712,7 @@ output "myserver" {
   value = "${aws_instance.myserver.public_ip}"
 }
 ```
-
+210
 
 
 
