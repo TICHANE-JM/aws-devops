@@ -1,9 +1,9 @@
-# Provider Configuration for AWS
+# Configuration du fournisseur pour AWS
 provider "aws" {
   region     = "us-east-1"
 }
 
-# Resource Configuration for AWS
+# Configuration des ressources pour AWS
 resource "aws_instance" "myserver" {
   ami = "ami-cfe4b2b0"
   instance_type = "t2.micro"
@@ -14,7 +14,7 @@ resource "aws_instance" "myserver" {
     Name = "helloworld"
   }
 
-# Provisioner for applying Ansible playbook
+# Approvisionnement pour l'application du playbook Ansible
   provisioner "remote-exec" {
     connection {
       user = "ec2-user"
@@ -31,7 +31,7 @@ resource "aws_instance" "myserver" {
   }  
 }
 
-# IP address of newly created EC2 instance
+# Adresse IP de l'instance EC2 nouvellement créée
 output "myserver" {
  value = "${aws_instance.myserver.public_ip}"
 }
