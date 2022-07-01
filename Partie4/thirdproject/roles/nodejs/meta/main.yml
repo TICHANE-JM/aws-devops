@@ -1,0 +1,57 @@
+galaxy_info:
+  author: JMT
+  description: Ta description
+  company: votre entreprise (facultatif)
+
+  # Si le suivi des problèmes pour votre rôle n'est pas sur
+  # github, décommentez la ligne suivante et fournissez une valeur
+  # issue_tracker_url: http://example.com/issue/tracker
+
+  # Quelques licences suggérées :
+  # - BSD (default)
+  # - MIT
+  # - GPLv2
+  # - GPLv3
+  # - Apache
+  # - CC-BY
+  license: license (GPLv2, CC-BY, etc)
+
+  min_ansible_version: 1.2
+
+  # S'il s'agit d'un rôle de conteneur activé, indiquez la version minimale du conteneur Ansible.
+  # min_ansible_container_version:
+
+  # Spécifiez éventuellement la branche que Galaxy utilisera lors de l'accès au référentiel GitHub
+  # pour ce rôle. Lors de l'installation du rôle, si aucune balise n'est disponible,
+  # Galaxy utilisera cette branche. Lors de l'importation, Galaxy accédera aux
+  # fichiers de cette branche. Si l'intégration de Travis est configurée, seules les notifications pour
+  # cette branche seront acceptées. Sinon, dans tous les cas, la branche
+  # par défaut du référentiel (généralement master) sera utilisée.
+  #github_branch:
+
+  #
+  # plates-formes est une liste de plates-formes, et chaque plate-forme a un nom et une liste de versions.
+  #
+  # platforms:
+  # - name: Fedora
+  #   versions:
+  #   - all
+  #   - 25
+  # - name: SomePlatform
+  #   versions:
+  #   - all
+  #   - 1.0
+  #   - 7
+  #   - 99.99
+
+  galaxy_tags: []
+    # Listez les balises pour votre rôle ici, une par ligne. Une balise est un mot-clé qui décrit
+    # et catégorise le rôle. Les utilisateurs trouvent des rôles en recherchant des balises. Assurez-vous 
+    # de supprimer le '[]' ci-dessus, si vous ajoutez des balises à cette liste.
+    #
+    # REMARQUE : Un tag est limitée à un seul mot composé de caractères alphanumériques.
+    #       Maximum 20 tags par rôle.
+
+dependencies: []
+  # Listez vos dépendances de rôle ici, une par ligne. Assurez-vous de supprimer le '[]' ci-dessus,
+  # si vous ajoutez des dépendances à cette liste.
