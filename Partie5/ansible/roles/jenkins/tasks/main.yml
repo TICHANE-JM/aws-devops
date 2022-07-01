@@ -1,30 +1,30 @@
 ---
-# tasks file for jenkins
-- name: Removing old version of JAVA from Amazon Linux
+# fichier de tâches pour jenkins
+- name: Suppression de l'ancienne version de JAVA d'Amazon Linux
   yum:
     name: java-1.7.0-openjdk
     state: absent
 
-- name: Install specific supported version of JAVA
+- name: Installer une version spécifique prise en charge de JAVA
   yum:
     name: java-1.8.0-openjdk
     state: present
 
-- name: Add Jenkins repository
+- name: Ajouter un référentiel Jenkins
   shell: wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat/jenkins.repo
 
-- name: Import Jenkins GPG key
+- name: Importer la clé Jenkins GPG
   rpm_key:
     state: present
     key: https://pkg.jenkins.io/redhat/jenkins.io.key
 
-- name: Install Jenkins
+- name: Installer Jenkins
   yum:
     name: jenkins-2.99
     enablerepo: jenkins
     state: present
 
-- name: Start Jenkins
+- name: Démarrer Jenkins
   service:
     name: jenkins
     enabled: yes
