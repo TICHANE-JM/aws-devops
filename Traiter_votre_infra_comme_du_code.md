@@ -666,8 +666,163 @@ Comme précédemment, nous allons maintenant entrer dans le répertoire hellowor
 ```
 $ cd helloworld
 ```
+Cette fois, nous allons explorer certains des autres répertoires présents. L'un des sous-répertoires créés lorsque nous avons exécuté la commande `ansible-galaxy` était le répertoire appelé `files`. L'ajout de fichiers à ce répertoire nous donnera la possibilité de copier des fichiers sur les hôtes distants. Pour ce faire, nous allons d'abord télécharger nos deux fichiers dans ce répertoire comme suit :
+```
+$ wget http://bit.ly/2vESNuc -O files/helloworld.js
+$ wget http://bit.ly/2vVvT18 -O files/helloworld.conf
+```
 
+Nous pouvons maintenant utiliser des fichiers de tâches pour effectuer la copie sur le système distant. Ouvrez le fichier `tasks/main.yml` et, après les trois tirets et commentaires initiaux, ajoutez ce qui suit :
+```
+---
+# tasks file for helloworld
+- name: Copying the application file copy:
+src: helloworld.js dest: /home/ec2-user/ owner: ec2-user group: ec2-user
+mode: 0644
+notify: restart helloworld
+```
+Nous profitons du module de copie documenté sur http://bit.ly/1WBv08E pour copier notre fichier d'application dans le répertoire personnel de l'utilisateur `ec2-user`. Sur la dernière ligne de cet appel, nous ajoutons une option de notification à la fin (notez comment l'instruction de `notify` est alignée avec l'appel au module de copie). Les actions de notification sont des déclencheurs qui peuvent être ajoutés à la fin de chaque bloc de tâches dans un playbook. Dans cet exemple, nous disons à Ansible d'appeler la directive `restart helloworld` si le fichier `helloworld.js` a changé, et de ne pas effectuer de redémarrage si rien n'est changé dans le code (nous définirons comment faire un redémarrage de l'application `helloworld` dans un fichier différent un peu plus tard).
 
+L'une des grandes différences entre CloudFormation et Ansible est qu'Ansible doit s'exécuter plusieurs fois tout au long de la durée de vie de vos systèmes. De nombreuses fonctionnalités intégrées à Ansible sont optimisées pour les instances de longue durée. Ainsi, l'option `notify`  facilite le déclenchement d'événements lorsqu'un système change d'état. De même, Ansible saura stopper l'exécution lorsqu'une erreur rencontrée évite dans la mesure du possible les pannes.
 
+Maintenant que nous avons copié notre fichier d'application, nous pouvons ajouter notre deuxième fichier, le script upstart. Après l'appel précédent pour copier le fichier `helloword.js`, nous allons ajouter l'appel suivant :
 
+```
+- name: Copying the upstart file copy:
+src: helloworld.conf
+dest: /etc/init/helloworld.conf owner: root
+group: root mode: 0644
+```
+La dernière tâche que nous devons effectuer est de démarrer notre service. Nous utiliserons le module de service pour cela. La documentation du module est disponible sur http://bit.ly/22I7QNH :
+```
+- name: Starting the HelloWorld node service service:
+name: helloworld state: started
+```
+Notre fichier de tâches est maintenant terminé. Vous devriez vous retrouver avec quelque chose qui ressemble à l'échantillon disponible sur https://github.com/TICHANE-JM/aws-devops/blob/master/Partie3/ansible/roles/helloworld/tasks/main.yml.
+
+Après avoir terminé notre fichier de tâche, nous allons passer au fichier suivant, qui indiquera à Ansible comment et quand redémarrer `helloworld`, comme indiqué dans le paramètre `notify` de notre tâche. Ces types d'interaction sont définis dans la section gestionnaire du rôle. Nous allons éditer le fichier `handlers/main.yml`. Ici aussi, nous allons utiliser le module de `service`. Voici un commentaire :
+```
+---
+# handlers file for helloworld
+```
+Ajoutez ce qui suit au fichier main.yml :
+```
+- name: restart helloworld service:
+name: helloworld state: restarted
+```
+Pas de surprises ici; nous utilisons le même module que nous utilisions précédemment pour gérer le service. Nous avons besoin d'une étape de plus dans notre rôle. Pour que le rôle helloworld fonctionne, le système doit avoir installé Node.js. Ansible prend en charge le concept de dépendances de rôle. Nous pouvons explicitement dire que notre rôle `helloworld` dépend du rôle `nodejs` que nous avons créé précédemment, de sorte que, si le rôle helloworld est exécuté, il appellera d'abord le rôle `nodejs` et installera les exigences nécessaires pour exécuter l'application.
+
+Ouvrez le fichier `meta/main.yml`. Ce fichier comporte deux sections. Le premier, sous galaxy_info, vous permet de remplir les informations sur le rôle que vous construisez. Si vous le souhaitez, vous pouvez finalement publier votre rôle sur GitHub et le lier à `ansible-galaxy` pour partager votre création avec la communauté Ansible. La deuxième section en bas du fichier s'appelle `dependencies` et c'est celle que nous voulons modifier pour nous assurer que nodejs est présent sur le système avant de démarrer notre application. Supprimez les crochets ([]) et ajoutez une entrée pour appeler nodejs comme suit :
+
+```
+dependencies:
+- nodejs
+```
+Votre fichier devrait ressembler à l'exemple disponible sur https://github.com/TICHANE-JM/aws-devops/blob/master/Partie3/ansible/roles/helloworld/meta/main.yml. Ceci conclut la création du code pour le rôle. Du point de vue de la documentation, il est recommandé d'éditer également `README.md`. Une fois cela fait, nous pouvons passer à la création d'un fichier de playbook qui fera référence à notre rôle nouvellement créé.
+
+### Création du fichier playbook
+
+Au niveau supérieur de notre référentiel Ansible (deux répertoires à partir du rôle `helloworld`), nous allons créer un nouveau fichier appelé `helloworld.yml`. Dans ce fichier, nous allons ajouter les éléments suivants :
+```
+---
+- hosts: "{{ target | default('localhost') }}" become: yes
+roles:
+- helloworld
+```
+Cela indique essentiellement à Ansible d'exécuter le rôle helloworld sur les hôtes répertoriés dans la variable cible, ou localhost si la cible n'est pas définie. L'option Become indiquera à Ansible d'exécuter le rôle avec des privilèges élevés (dans notre cas, sudo). À ce stade, votre référentiel Ansible devrait ressembler à l'exemple sur https://github.com/TICHANE-JM/aws-devops/tree/master/Partie3/ansible. Nous sommes maintenant prêts à tester notre playbook.
+Notez qu'en pratique, à plus grande échelle, les sections de rôles pourraient inclure plus d'un seul rôle. Si vous déployez plusieurs applications ou services sur une cible, vous verrez souvent un playbook ressemblant à ceci. Dans les parties suivantes, nous en verrons d'autres exemples :
+
+```
+---
+hosts: webservers roles:
+foo
+bar
+baz
+```
+### Exécution d'un playbook
+
+L'exécution des playbooks se fait à l'aide de la commande dédiée `ansible-playbook`. Cette commande repose sur le même fichier de configuration Ansible que nous avons utilisé précédemment, et par conséquent, nous souhaitons exécuter la commande à partir de la racine de notre référentiel Ansible. La syntaxe de la commande est la suivante :
+```
+ansible-playbook <playbook.yml> [options]
+```
+Nous allons d'abord lancer la commande suivante (adapter la valeur de l'option `private-key`) :
+```
+$ ansible-playbook helloworld.yml \
+    --private-key ~/.ssh/EffectiveDevOpsAWS.pem \
+    -e target=ec2 \
+    --list-hosts
+```
+L'option `-e` (ou `--extra-vars`) nous permet de passer des options supplémentaires pour l'exécution. Dans notre cas, nous définissons la variable `target` (que nous avons déclarée dans la section `hosts` de notre playbook) comme étant égale à `ec2`. Cette première commande `ansible-playbook` indiquera à Ansible de cibler toutes les instances EC2. L'option `--list-hosts` fera en sorte qu'Ansible renvoie une liste d'hôtes qui correspondent aux critères d'hôtes, mais il n'exécutera rien sur ces hôtes. La sortie de la commande ressemblera à ceci :
+```
+playbook: helloworld.yml
+  play #1 (ec2): ec2 TAGS:[]
+    pattern: [u'ec2']
+    hosts (1):
+      18.206.223.199
+```
+L'option `list-hosts` est un bon moyen de vérifier votre inventaire et, sur des playbooks plus complexes avec des valeurs d'hôte plus spécifiques, de vérifier quels hôtes exécuteraient des playbooks réels, vous permettant de vérifier qu'ils ciblent les hôtes que vous attendez.
+
+Nous savons maintenant quels hôtes seront impactés si nous devions utiliser cette valeur pour la cible. La prochaine chose que nous voulons vérifier est ce qui se passera si nous exécutons notre playbook. La commande `ansible-playbook` a une option `-C` (ou `--check`) qui essaiera de prédire le changement qu'un playbook donné apportera ; ceci est parfois aussi appelé mode **dry-run** dans Ansible :
+```
+$ ansible-playbook helloworld.yml \
+    --private-key ~/.ssh/EffectiveDevOpsAWS.pem \
+    -e target=18.206.223.199 \
+    --check
+PLAY [18.206.223.199] *******************************************************************************************************************************TASK [Gathering Facts] *******************************************************************************************************************************ok: [18.206.223.199]
+TASK [nodejs : Installing node and npm] *******************************************************************************************************************************changed: [18.206.223.199] => (item=[u'nodejs', u'npm'])
+TASK [helloworld : Copying the application file] ***********************************************************************************************************************
+changed: [18.206.223.199]
+TASK [helloworld : Copying the upstart file] ***************************************************************************************************************************
+changed: [18.206.223.199]
+TASK [helloworld : Starting the HelloWorld node service] ***************************************************************************************************************
+changed: [18.206.223.199]
+RUNNING HANDLER [helloworld : restart helloworld] **********************************************************************************************************************
+changed: [18.206.223.199]
+PLAY RECAP *******************************************************************************************************************************18.206.223.199 : ok=6 changed=5 unreachable=0 failed=0
+```
+L'exécution de cette commande exécutera notre playbook en mode simulation. Grâce à ce mode, nous pouvons nous assurer que les tâches appropriées seront exécutées. Parce que nous sommes en mode dry-run, certains modules ne trouvent pas vraiment tout ce dont ils ont besoin pour simuler leur fonctionnement. C'est la raison pour laquelle nous voyons parfois des erreurs de démarrage de service à la fin du module de service. Si vous voyez ceci, ne vous inquiétez pas, il sera exécuté lorsque les packages seront installés en mode réel. Après avoir vérifié les hôtes et le code, nous pouvons enfin exécuter `ansible-playbook` et exécuter nos modifications en mode réel comme suit :
+```
+$ ansible-playbook helloworld.yml \
+    --private-key ~/.ssh/EffectiveDevOpsAWS.pem \
+    -e target=18.206.223.199
+```
+La sortie est très similaire à la commande `--check`, sauf que cette fois, l'exécution est effectuée en mode réel. Notre application est maintenant installée et configurée, et nous pouvons vérifier qu'elle fonctionne correctement comme suit :
+```
+$ curl 18.206.223.199:3000
+Hello World
+```
+Nous avons pu reproduire ce que nous faisions précédemment avec CloudFormation en utilisant Ansible. Maintenant que nous avons testé notre premier playbook, nous pouvons valider nos modifications. Nous ferons cela en deux commits pour décomposer l'initialisation du référentiel et la création du rôle. À partir de la racine de votre dépôt Ansible, exécutez les commandes suivantes :
+```
+$ git add ansible.cfg ec2.ini ec2.py
+$ git commit -m "Configurer ansible pour qu'il fonctionne avec EC2"
+$ git add roles helloworld.yml
+$ git commit -m "Ajout d'un rôle pour nodejs et helloworld"
+$ git push
+```
+### Modifications des tests Canary
+
+L'un des grands avantages de l'utilisation d'Ansible pour gérer les services est que vous pouvez facilement apporter des modifications à votre code et pousser rapidement le changement. Dans certaines situations où vous avez une grande flotte de services gérés par Ansible, vous souhaiterez peut-être n'apporter une modification qu'à un seul hôte pour vous assurer que les choses sont comme vous vous y attendez. Ceci est souvent appelé `test canary`. Avec Ansible, faites ce fichier `roles/helloworld/files/helloworld.js` puis changez simplement la réponse à la ligne 11 de `Hello World` à `Hello World, Welcome again` :
+```
+// Envoyez le corps de la réponse en tant que "Hello World"
+response.end('Hello World, Welcome again\n');
+}).listen(3000);
+```
+Enregistrez le fichier, puis exécutez à nouveau ansible-playbook. Faites-le d'abord avec l'option `--check` :
+```
+$ ansible-playbook helloworld.yml \
+    --private-key ~/.ssh/EffectiveDevOpsAWS.pem \
+    -e target=18.206.223.199 \
+    --check
+```
+Cette fois, Ansible ne détecte que deux changements. Le premier écrase le fichier d'application et le second exécute l'instruction `notify`, ce qui signifie redémarrer l'application. Voyant que c'est ce que nous attendons, nous pouvons exécuter notre playbook sans les options `--check` :
+```
+$ ansible-playbook helloworld.yml \
+    --private-key ~/.ssh/EffectiveDevOpsAWS.pem \
+    -e target=18.206.223.199
+```
+Cela produit la même sortie que dans notre commande précédente, mais cette fois, le changement est effectif :
+```
+$ curl 18.206.223.199:3000
+Hello World, Welcome again
+```
 
