@@ -1,7 +1,0 @@
----
-# handlers file for helloworld
-
-- name: redémarrer helloworld
-  service:
-    name: helloworld
-    state: restarted
