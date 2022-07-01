@@ -10,9 +10,9 @@ from subprocess import PIPE
 DOCUMENTATION = '''
 ---
 module: aws_codedeploy
-short_description: Installs and starts the AWS CodeDeploy Agent
+short_description : installe et démarre l'agent AWS CodeDeploy
 description:
-  - Installs and starts the AWS CodeDeploy Agent
+  - Installe et démarre l'agent AWS CodeDeploy
 version_added: 0.0
 author: Andrew Fitz Gibbon
 options:
@@ -31,7 +31,7 @@ except ImportError:
     print "failed=True msg='boto required for this module'"
     sys.exit(1)
 
-# Determine if we're running on an EC2 instance
+# Déterminer si nous exécutons sur une instance EC2
 def on_ec2():
     try:
         instance_metadata = boto.utils.get_instance_metadata(timeout=2, num_retries=2)
@@ -42,7 +42,7 @@ def on_ec2():
     except:
         return False
 
-# Determine what kind of instance
+# Déterminez quel type d'instance
 def os_type():
     os = 'na'
     release = ''
@@ -73,7 +73,7 @@ def get_package(module, pkg_type):
     body, info = fetch_url(module, pkg_url)
 
     if info['status'] != 200:
-        module.fail_json(msg="Failed to download agent",
+        module.fail_json(msg="Échec du téléchargement de l'agent",
                          status_code=info['status'],
                          respose=info['msg'],
                          url=pkg_url)
@@ -82,7 +82,7 @@ def get_package(module, pkg_type):
         f = open(dest, 'wb')
         shutil.copyfileobj(body, f)
     except Exception, e:
-        module.fail_json(msg="failed to write agent package to disk: %s" % str(e))
+        module.fail_json(msg="échec de l'écriture du package d'agent sur le disque : %s" % str(e))
 
     return dest
 
@@ -105,7 +105,7 @@ def main():
     )
 
     if not on_ec2():
-        module.fail_json(msg="must install the AWS CodeDeploy on an EC2 instance")
+        module.fail_json(msg="doit installer AWS CodeDeploy sur une instance EC2")
 
     try:
         os = os_type()
@@ -115,7 +115,7 @@ def main():
         elif os == 'amzn':
             pkg_type = 'rpm'
         else:
-            module.fail_json(msg="must install the AWS CodeDeploy on a supported OS type")
+            module.fail_json(msg="doit installer AWS CodeDeploy sur un type de système d'exploitation pris en charge")
 
         pkg = get_package(module, pkg_type)
         install_pacakge(pkg, pkg_type)
