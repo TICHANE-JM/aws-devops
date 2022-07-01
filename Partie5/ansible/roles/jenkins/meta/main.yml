@@ -1,0 +1,226 @@
+galaxy_info:
+  author: votre nom
+  description: Ta description
+  company: votre entreprise (facultatif)
+
+  # Si le suivi des problèmes pour votre rôle n'est pas sur github,
+  # décommentez la ligne suivante et fournissez une valeur
+  # issue_tracker_url: http://example.com/issue/tracker
+
+  # Some suggested licenses:
+  # - BSD (default)
+  # - MIT
+  # - GPLv2
+  # - GPLv3
+  # - Apache
+  # - CC-BY
+  license: license (GPLv2, CC-BY, etc)
+
+  min_ansible_version: 1.2
+
+  # Spécifiez éventuellement la branche que Galaxy utilisera lors de l'accès au GitHub
+  # Galaxy utilisera cette branche. Lors de l'importation, Galaxy accédera aux fichiers de cette branche.
+  # Si l'intégration de travis est cofigurée, seule la notification pour
+  # cette branche sera acceptée. Sinon, dans tous les cas,
+  # la branche par défaut du référentiel 
+  # (généralement master) sera utilisée.
+  #github_branch:
+
+  #
+  # Vous trouverez ci-dessous toutes les plateformes actuellement disponibles. Décommentez
+  # simplement ceux qui s'appliquent à votre rôle. Si vous ne voyez pas votre 
+  # plateforme sur cette liste, faites-le nous savoir et nous l'ajouterons !
+  #
+  #platforms:
+  #- name: OpenBSD
+  #  versions:
+  #  - all
+  #  - 5.6
+  #  - 5.7
+  #  - 5.8
+  #  - 5.9
+  #  - 6.0
+  #  - 6.1
+  #- name: Fedora
+  #  versions:
+  #  - all
+  #  - 16
+  #  - 17
+  #  - 18
+  #  - 19
+  #  - 20
+  #  - 21
+  #  - 22
+  #  - 23
+  #  - 24
+  #  - 25
+  #  - 26
+  #- name: DellOS
+  #  versions:
+  #  - all
+  #  - 10
+  #  - 6
+  #  - 9
+  #- name: MacOSX
+  #  versions:
+  #  - all
+  #  - 10.10
+  #  - 10.11
+  #  - 10.12
+  #  - 10.7
+  #  - 10.8
+  #  - 10.9
+  #- name: Synology
+  #  versions:
+  #  - all
+  #  - any
+  #- name: Junos
+  #  versions:
+  #  - all
+  #  - any
+  #- name: GenericBSD
+  #  versions:
+  #  - all
+  #  - any
+  #- name: Void Linux
+  #  versions:
+  #  - all
+  #  - any
+  #- name: GenericLinux
+  #  versions:
+  #  - all
+  #  - any
+  #- name: NXOS
+  #  versions:
+  #  - all
+  #  - any
+  #- name: IOS
+  #  versions:
+  #  - all
+  #  - any
+  #- name: Amazon
+  #  versions:
+  #  - all
+  #  - 2013.03
+  #  - 2013.09
+  #  - 2016.03
+  #  - 2016.09
+  #- name: ArchLinux
+  #  versions:
+  #  - all
+  #  - any
+  #- name: FreeBSD
+  #  versions:
+  #  - all
+  #  - 10.0
+  #  - 10.1
+  #  - 10.2
+  #  - 10.3
+  #  - 11.0
+  #  - 8.0
+  #  - 8.1
+  #  - 8.2
+  #  - 8.3
+  #  - 8.4
+  #  - 9.0
+  #  - 9.1
+  #  - 9.1
+  #  - 9.2
+  #  - 9.3
+  #- name: Ubuntu
+  #  versions:
+  #  - all
+  #  - artful
+  #  - lucid
+  #  - maverick
+  #  - natty
+  #  - oneiric
+  #  - precise
+  #  - quantal
+  #  - raring
+  #  - saucy
+  #  - trusty
+  #  - utopic
+  #  - vivid
+  #  - wily
+  #  - xenial
+  #  - yakkety
+  #  - zesty
+  #- name: Debian
+  #  versions:
+  #  - all
+  #  - etch
+  #  - jessie
+  #  - lenny
+  #  - sid
+  #  - squeeze
+  #  - stretch
+  #  - wheezy
+  #- name: Alpine
+  #  versions:
+  #  - all
+  #  - any
+  #- name: EL
+  #  versions:
+  #  - all
+  #  - 5
+  #  - 6
+  #  - 7
+  #- name: Windows
+  #  versions:
+  #  - all
+  #  - 2012R2
+  #- name: SmartOS
+  #  versions:
+  #  - all
+  #  - any
+  #- name: opensuse
+  #  versions:
+  #  - all
+  #  - 12.1
+  #  - 12.2
+  #  - 12.3
+  #  - 13.1
+  #  - 13.2
+  #- name: SLES
+  #  versions:
+  #  - all
+  #  - 10SP3
+  #  - 10SP4
+  #  - 11
+  #  - 11SP1
+  #  - 11SP2
+  #  - 11SP3
+  #  - 11SP4
+  #  - 12
+  #  - 12SP1
+  #- name: GenericUNIX
+  #  versions:
+  #  - all
+  #  - any
+  #- name: Solaris
+  #  versions:
+  #  - all
+  #  - 10
+  #  - 11.0
+  #  - 11.1
+  #  - 11.2
+  #  - 11.3
+  #- name: eos
+  #  versions:
+  #  - all
+  #  - Any
+
+  galaxy_tags: []
+    # Listez les tags pour votre rôle ici, une par ligne. Un tag
+    # est un mot-clé qui décrit et catégorise le rôle. 
+    # Les utilisateurs trouvent des rôles en recherchant des balises. Assurez-vous
+    # de supprimer le '[]' ci-dessus si vous ajoutez des balises à cette liste.
+    #
+    # REMARQUE : Un tag est limitée à un seul mot composé de caractères 
+    # alphanumériques. Maximum 20 tags par rôle.
+
+dependencies: []
+  # Listez vos dépendances de rôle ici, une par ligne.
+  # Assurez-vous de supprimer le '[]' ci-dessus si vous ajoutez des dépendances
+  # à cette liste.
