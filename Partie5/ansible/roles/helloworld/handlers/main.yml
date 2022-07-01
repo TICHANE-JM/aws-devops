@@ -1,0 +1,7 @@
+---
+# fichier de gestionnaires pour helloworld
+
+- name: redémarrer helloworld
+  service:
+    name: helloworld
+    state: restarted
