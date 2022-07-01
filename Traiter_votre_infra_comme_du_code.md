@@ -825,4 +825,173 @@ Cela produit la même sortie que dans notre commande précédente, mais cette fo
 $ curl 18.206.223.199:3000
 Hello World, Welcome again
 ```
+Notre changement était très simple, mais si nous l'avions fait en mettant à jour notre modèle CloudFormation, CloudFormation aurait dû créer une nouvelle instance EC2 pour que cela se produise. Ici, nous avons simplement mis à jour le code de l'application et l'avons poussé via Ansible sur l'hôte cible. Nous allons maintenant annuler ce changement localement dans Git comme suit :
+```
+$ git checkout roles/helloworld/files/helloworld.js
+```
+Nous le démontrerons en supprimant les modifications de l'instance EC2 lorsque nous illustrerons un nouveau concept. Dans la section suivante, nous exécuterons Ansible de manière asynchrone en mode inversé (dans ce cas, en mode pull).
+
+> **Le plus tôt sera le mieux :** être capable de pousser les changements en quelques secondes au lieu de quelques minutes peut sembler être une petite victoire, mais ce n'est pas le cas. La vitesse compte; c'est ce qui distingue les start-ups et les technologies qui réussissent. La possibilité de déployer de nouveaux serveurs en quelques minutes au lieu de plusieurs jours est un facteur important dans l'adoption du cloud. De même, le récent succès des conteneurs, comme nous le verrons plus loin dans le livre, est également probablement dû au fait qu'il ne faut que quelques secondes pour exécuter un nouveau conteneur, alors qu'il faut encore quelques minutes pour démarrer un serveur virtuel.
+
+### Exécuter Ansible en mode pull
+Avoir la possibilité de faire instantanément un changement comme nous venons de le faire est une fonctionnalité très précieuse. Nous pourrions facilement et de manière synchrone envoyer le nouveau code et vérifier que l'exécution d'Ansible a réussi. À plus grande échelle, si la possibilité de changer n'importe quoi sur une flotte de serveurs reste aussi précieuse que dans notre exemple, c'est aussi parfois un peu plus délicat. Le risque d'apporter des modifications de cette manière est que vous devez être très discipliné en ce qui concerne le fait de ne pas appliquer les modifications uniquement à un sous-ensemble d'hôtes et d'oublier d'autres hôtes qui partagent également le rôle qui vient d'être mis à jour. Sinon, le nombre croissant de changements entre le référentiel de configuration Ansible et les serveurs en cours d'exécution rend rapidement l'exécution d'Ansible une opération plus risquée. Dans ces situations, il est généralement préférable d'utiliser un mécanisme d'extraction qui intègre automatiquement les modifications. Bien sûr, vous n'avez pas à choisir l'un ou l'autre : il est facile de configurer les mécanismes push et pull pour déployer les modifications. Ansible fournit une commande appelée `ansible-pull`, qui, comme son nom l'indique, facilite l'exécution d'Ansible en mode pull. La commande `ansible-pull` fonctionne très bien comme `ansible-playbook`, sauf qu'elle commence par extraire votre code de votre référentiel GitHub.
+
+### Installer Git et Ansible sur notre instance EC2
+
+Comme nous devons pouvoir exécuter Ansible et Git à distance, nous devons d'abord installer ces packages sur notre instance EC2. Pour l'instant, nous allons le faire en installant manuellement ces deux packages. Nous implémenterons une solution réutilisable plus loin dans ce chapitre. Étant donné qu'Ansible est un outil parfait pour exécuter des commandes à distance et qu'il dispose d'un module pour gérer les exigences les plus courantes telles que l'installation de packages, au lieu de se connecter à l'hôte via `ssh` et d'exécuter certaines commandes, nous allons utiliser Ansible pour pousser ces changements. . Nous allons installer Git et Ansible à partir du référentiel EPEL yum. Cela nécessitera l'exécution de commandes en tant que **root**, ce que vous pouvez faire à l'aide de l'option `become`. Après avoir adapté l'adresse IP de votre instance EC2, exécutez les commandes suivantes :
+
+```
+$ ansible '18.206.223.199' \
+    --private-key ~/.ssh/aws-devops.pem \
+    --become \
+    -m yum -a 'name=git enablerepo=epel state=installed'
+    
+$ ansible '18.206.223.199' \
+    --private-key ~/.ssh/aws-devops.pem \
+    --become \
+    -m yum -a 'name=ansible enablerepo=epel state=installed'
+```
+Avec `ansible-pull`, notre objectif est qu'Ansible applique le changement localement. Nous pouvons apporter une modification à notre référentiel Ansible afin d'optimiser cette opération.
+
+### Configuration d'Ansible pour qu'il s'exécute sur localhost
+
+Étant donné que ansible-pull s'appuie sur Git pour cloner localement le référentiel et l'exécuter, nous n'avons pas besoin que l'exécution se fasse via SSH. Accédez au répertoire racine de votre référentiel Ansible pour créer un nouveau fichier. Le fichier doit s'appeler localhost et il doit contenir les éléments suivants :
+```
+[localhost]
+localhost ansible_connection=local
+```
+Essentiellement, ce que nous faisons est de créer un inventaire statique et de demander à `ansible` d'exécuter des commandes en mode local (par opposition à l'utilisation de SSH) lorsque l'hôte cible est `localhost`. Nous pouvons enregistrer les modifications et valider le nouveau fichier sur GitHub comme suit :
+```
+$ git add localhost
+$ git commit -m "Adding localhost inventory"
+$ git push
+```
+
+### Ajouter une tâche cron à notre instance EC2
+
+Nous allons maintenant créer une entrée cron tab pour appeler périodiquement `ansible-pull`. Ici aussi, nous nous appuierons sur Ansible pour créer notre tâche cron à distance. Exécutez la commande suivante en adaptant l'adresse IP :
+```
+$ ansible '18.206.223.199' \
+--private-key ~/.ssh/aws-devops.pem \
+-m cron -a 'name=ansible-pull minute="*/10" job="/usr/bin/ansible-pull -U https://github.com/<your_username>
+```
+Dans la commande précédente, nous indiquons à Ansible d'utiliser le module cron ciblant notre instance ec2. Ici, nous fournissons un nom qu'Ansible utilisera pour suivre la tâche cron dans le temps, indiquant à cron d'exécuter la tâche toutes les 10 minutes, suivi de la commande à exécuter et de ses paramètres. Les paramètres que nous donnons à ansible-pull sont l'URL GitHub de notre branche, le fichier d'inventaire que nous venons d'ajouter à notre référentiel et un paramètre `sleep` qui fera démarrer la commande entre 1 et 60 secondes après le début de l'appel. Cela aidera à répartir la charge sur le réseau et empêchera tous les services de nœud de redémarrer en même temps si nous avons plus d'un serveur. Après avoir attendu un peu, nous pouvons vérifier en attendant un peu, nous pouvons vérifier que notre changement est effectif grâce à ce qui suit :
+```
+$ curl 54.175.86.38:3000
+Hello World
+```
+Après avoir intégré manuellement Ansible à l'instance EC2 que nous avons créée à l'aide de CloudFormation, nous pouvons maintenant formaliser la procédure.
+
+### Intégration d'Ansible à CloudFormation
+Bien qu'il existe différentes stratégies pour intégrer Ansible à CloudFormation, dans notre situation, il existe une voie évidente à suivre. Nous allons tirer parti du champ `UserData` et initialiser Ansible via la commande `ansible-pull`.
+
+Nous allons maintenant démarrer le script Troposphere que nous avons créé plus tôt dans cette partie. Nous allons le dupliquer et appeler le nouveau script comme suit :
+```
+ansiblebase-cf-template.py.
+```
+Go to your template repository and duplicate the previous template as follows:
+```
+$ cd aws-devops
+$ cp helloworld-cf-template.py ansiblebase-cf-template.py
+```
+Ensuite, ouvrez le script `ansiblebase-cf-template.py` avec votre éditeur. Pour garder le script lisible, nous allons d'abord définir plusieurs variables. Avant la déclaration du port applicatif, nous allons définir un nom d'application :
+
+```
+ApplicationName = "helloworld"
+ApplicationPort = "3000"
+```
+Nous définirons également un certain nombre de constantes autour des informations GitHub. Remplacez la valeur de `GithubAccount` par votre nom d'utilisateur GitHub ou le nom de votre organisation GitHub comme suit :
+```
+ApplicationPort = "3000"
+GithubAccount = "TICHANE-JM"
+GithubAnsibleURL = "https://github.com/{}/ansible".format(GithubAccount)
+```
+Après la définition de `GithubAnsibleURL`, nous allons créer une autre variable qui contiendra la ligne de commande que nous voulons exécuter afin de configurer l'hôte via Ansible. Nous appellerons `ansible-pull` et utiliserons les variables `GithubAnsibleURL` et `ApplicationName` que nous venons de définir. Voici à quoi cela ressemble :
+```
+AnsiblePullCmd = \
+"/usr/bin/ansible-pull -U {} {}.yml -i localhost".format( GithubAnsibleURL,
+ApplicationName
+)
+```
+Nous allons maintenant mettre à jour le bloc `UserData`. Au lieu d'installer Node.js, de télécharger nos fichiers d'application et de démarrer le service, nous allons changer ce bloc pour installer `git` et `ansible`, exécuter la commande contenue dans la variable `AnsiblePullCmd`, et enfin créer une tâche cron pour ré-exécuter cette commande tous les 10 minutes. Supprimez la définition de variable `ud` précédente et remplacez-la par ce qui suit :
+
+```
+ud = Base64(Join('\n', [ "#!/bin/bash",
+"yum install --enablerepo=epel -y git", "pip install ansible",
+AnsiblePullCmd,
+"echo '*/10 * * * * {}' > /etc/cron.d/ansible- pull".format(AnsiblePullCmd)
+]))
+```
+Nous pouvons maintenant enregistrer notre fichier, l'utiliser pour créer notre modèle JSON et le tester. Votre nouveau script devrait ressembler à l'exemple sur https://github.com/TICHANE-JM/aws-devops/blob/master/ansiblebase-cf-template.py :
+```
+$ python ansiblebase-cf-template.py > ansiblebase.template
+$ aws cloudformation update-stack \
+    --stack-name ansible \
+    --template-body file://ansiblebase.template \
+    --parameters ParameterKey=KeyPair,ParameterValue=EffectiveDevOpsAWS
+{ 
+"StackId": "
+arn:aws:cloudformation:useast-
+1:511912822958:stack/HelloWorld/ef2c3250-6428-11e7-a67b-50d501eed2b3"
+}
+```
+Vous pouvez même créer vous-même une nouvelle pile. Par exemple, disons `helloworld`, au lieu de changer la pile `ansible` existante. Dans ce cas, vous devez exécuter la commande suivante pour la création de la pile :
+```
+$ aws cloudformation create-stack \
+    --stack-name helloworld \
+    --template-body file://ansiblebase.template \
+    --parameters ParameterKey=KeyPair,ParameterValue=EffectiveDevOpsAWS
+{
+    "StackId": "arn:aws:cloudformation:us-east-
+    1:094507990803:stack/helloworld/5959e7c0-9c6e-11e8-b47f-
+      50d5cd26c2d2"
+}
+```
+Nous pouvons maintenant attendre que l'exécution soit terminée :
+
+```
+$ aws cloudformation wait stack-update-complete \
+    --stack-name ansible
+```
+Maintenant que la création de la pile est terminée, nous pouvons interroger CloudFormation pour obtenir la sortie de la pile et, plus précisément, son adresse IP publique :
+```
+$ aws cloudformation describe-stacks \
+    --stack-name ansible \
+    --query 'Stacks[0].Outputs[0]'
+  {
+      "Description": "Public IP of our instance.",
+      "OutputKey": "InstancePublicIp",
+      "OutputValue": "35.174.138.51"
+  }
+```
+Et enfin, nous pouvons vérifier que notre serveur est opérationnel comme suit :
+```
+$ curl 35.174.138.51:3000
+Hello World
+```
+Nous pouvons maintenant valider notre script de troposphère nouvellement créé dans notre référentiel GitHub comme suit :
+```
+aws-devops repository:
+$ git add ansiblebase-cf-template.py
+$ git commit -m "Ajout d'un script Troposphere pour créer une pile qui s'appuie sur Ansible pour gérer notre application"
+$ git push
+```
+Nous disposons désormais d'une solution complète pour gérer efficacement notre infrastructure à l'aide de code. Nous l'avons démontré à travers un exemple très simple. Cependant, comme vous pouvez l'imaginer, tout est applicable à une plus grande infrastructure avec un plus grand nombre de services. Cette section est presque terminée; nous pouvons maintenant supprimer notre pile pour libérer les ressources que nous consommons actuellement. Dans la première partie , nous l'avons fait en utilisant l'interface Web. Comme vous pouvez l'imaginer, cela peut également être fait facilement en utilisant l'interface de ligne de commande suivante :
+```
+$ aws cloudformation delete-stack --stack-name ansible
+```
+Notez que si vous avez créé une nouvelle pile helloworld pour cet exemple, puis pour cet exemple, supprimez-la également à l'aide de la commande suivante :
+```
+aws cloudformation delete-stack --stack-name helloworld
+```
+
+### Monitoring
+Comme vous le savez probablement déjà, surveiller et mesurer tout est un aspect important d'une organisation axée sur DevOps. Sur Internet, vous trouverez un certain nombre d'articles de blog bien écrits et d'exemples sur la façon de surveiller efficacement CloudFormation et Ansible. Lorsque vous travaillez sur la surveillance de CloudFormation, vous souhaiterez vous abonner à un sujet SNS pour que votre création de pile reçoive tous les échecs de création de pile CloudFormation. Ansible dispose d'un système de rappels qui vous permettra également de créer une automatisation autour de l'exécution d'Ansible. Comme pour CloudFormation, il est important de recevoir des notifications lorsqu'Ansible ne s'exécute pas (c'est encore plus important lorsqu'Ansible est configuré pour s'exécuter en mode pull).
+
+### Résumé
+Dans cette partie, nous avons appris à gérer efficacement l'infrastructure à l'aide de code. Nous avons également exploré CloudFormation, un service AWS qui permet de créer des templates pour vos différents services afin de décrire chaque composant AWS utilisé, ainsi que sa configuration. Afin de simplifier la création de ces modèles, nous avons examiné quelques options, allant du concepteur CloudFormation, un outil avec une interface utilisateur graphique, à Troposphere, une bibliothèque Python. Ensuite, nous nous sommes penchés sur la gestion de la configuration, l'un des aspects les plus connus de la philosophie DevOps. Pour illustrer ce sujet, nous avons examiné Ansible, l'une des solutions de gestion de configuration les plus populaires. Nous avons d'abord examiné les différentes façons d'utiliser les commandes Ansible et exécuté des commandes simples sur notre infrastructure. Nous avons ensuite regardé comment créer des playbooks, ce qui nous a permis d'orchestrer les différentes étapes de déploiement de notre serveur web. Enfin, nous avons examiné comment Ansible peut être utilisé en mode pull, ce qui est généralement plus logique lors de la gestion d'une infrastructure importante.
+
+Nous avons maintenant un bon environnement de production prêt à héberger n'importe quelle application, et nous avons vu comment l'architecturer et surveiller nos serveurs. Dans la Partie 5, __Ajouter l'intégration continue et le déploiement continu__ , nous continuerons à utiliser CloudFormation et Ansible, mais dans le cadre de la livraison de logiciels : nous apprendrons comment mettre en place des tests d'intégration continue et un déploiement continu.
+
+
 
