@@ -766,6 +766,7 @@ $ terraform destroy
 
 ## Terraform avec Ansible en utilisant l'approche basée sur l'extraction
 
+214
 
 
 
