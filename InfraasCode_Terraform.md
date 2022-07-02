@@ -712,7 +712,61 @@ output "myserver" {
   value = "${aws_instance.myserver.public_ip}"
 }
 ```
-210
+Le fichier créé devrait ressembler au fichier sur : [https://raw.githubusercontent.com/TICHANE-JM/EffectiveDevOpsTerraform/master/thirdproject/helloworldansible.tf.](https://github.com/TICHANE-JM/DevopsTeraformAWS/blob/main/thirdproject/helloworldansible.tf)
+
+Nous appellerons le rôle `helloworld` dans notre playbook `helloworld.yml` Ansible pour déployer l'application web Hello World :
+```
+---
+- hosts: all
+    become: yes
+    roles:
+        - helloworld
+```
+Le fichier de configuration Ansible `ansible.cfg` devrait ressembler à ceci. Il doit pointer vers le fichier `myinventory` qui est présent dans notre structure de répertoires `thirdproject` :
+```
+[defaults]
+inventory = $PWD/myinventory
+roles_path = ./roles
+remote_user = ec2-user
+become = True
+become_method = sudo
+become_user = root
+nocows = 1
+host_key_checking = False
+```
+Le projet complet devrait ressembler au fichier sur : https://github.com/TICHANE-JM/DevopsTeraformAWS/blob/main/thirdproject
+
+Comme nous avons créé un nouveau répertoire, thirdproject, nous devons à nouveau installer le plugin ou réinitialiser les plugins liés à AWS pour Terraform. Le fichier configuré avec la section fournisseur effectuera cette tâche pour nous :
+```
+$ terraform init
+```
+Il est maintenant temps de valider le fichier de modèle Terraform pour vous assurer qu'il ne contient aucune erreur de syntaxe. Une fois la vérification réussie, exécutez le plan suivi de l'exécution réelle à l'aide de terraform apply :
+```
+$ terraform validate
+$ terraform plan
+$ terraform apply
+```
+Les sorties affichent clairement les journaux du playbook Ansible et renvoient le bloc de sortie avec l'adresse IP publique. Utilisons cette adresse IP publique pour vérifier le déploiement de l'application :
+```
+$ curl 54.85.107.87:3000
+```
+Le résultat de l'exécution de la commande précédente est le suivant :
+```
+# [root@tichanejm thirdproject]# curl 54.85.107.87:3000
+Hello world
+```
+Vérifions les sorties de l'application depuis le navigateur, comme illustré dans la capture d'écran suivante :
+
+![image](https://user-images.githubusercontent.com/107214400/176997035-88ec9edd-5ccf-4e84-96ba-48ee9fe84920.png)
+
+Une fois le déploiement réussi, exécutez `terraform destroy` pour nettoyer les ressources créées :
+```
+$ terraform destroy
+```
+
+## Terraform avec Ansible en utilisant l'approche basée sur l'extraction
+
+
 
 
 
